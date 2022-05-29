@@ -1,14 +1,14 @@
 #Создай собственный Шутер!
-from random import randint
+from random import randint,uniform
 from pygame import *
 from time import time as timer
 clock = time.Clock()
 FPS = 60
 
-
 h_win = 500 #высота экрана
 w_win = 700 #ширина экрана
-
+right_gr = 400
+left_gr = 200
 class GameSprite(sprite.Sprite):
     def __init__(self,name,speed,h,w,y,x,images):
         super().__init__()
@@ -53,19 +53,24 @@ class Bulet(GameSprite):
     def update(self): # Функция перемещения 
         self.rect.y -= self.speed
         if self.rect.y < 0:
-            self.kill()     
+            self.kill()
+class Bulet_kill(GameSprite): 
+    def update(self): # Функция перемещения 
+        self.rect.y -= self.speed
+        if self.rect.y < 0:
+            self.kill()    
 class Boss(GameSprite):
     direction = "left" #направление 
     def update(self):
-        if self.rect.x <= 200 : #граница
+        if self.rect.x <= 100 : #граница
             self.direction = "right"
-        if self.rect.x >= 400:
+        if self.rect.x >= w_win - w_boss - 100:
             self.direction = "left"
-
         if self.direction == "left":
             self.rect.x -= self.speed
         else:
             self.rect.x += self.speed
+        
     def firee(self): 
         bullet = bulet_boss('пуля босса',3,h_bullet_boss,w_bullet_boss,self.rect.bottom,self.rect.centerx-w_bullet_boss/2,'bullet.png')
         bullet.image = transform.rotate(bullet.image,180)  
@@ -76,6 +81,10 @@ class bulet_boss(GameSprite):
         self.rect.y += self.speed
         if self.rect.y > h_win:
             self.kill()
+    def firrrre(self):
+        bullet1 = Bulet_kill('пуля kill',3,h_bullet_boss,w_bullet_boss,self.rect.bottom,self.rect.centerx-w_bullet_boss/2,'bullet.png')
+        bullet1.image = bullet.image 
+        bulet_killl.add(bullet1)
 #константы
 w_player = 100
 h_player = 100
@@ -125,18 +134,14 @@ propushen = propushen_start
 
 #время
 shoot_timer = 0
-interval_shoot = 4
+interval_shoot = 1
 
 font.init()
 #создаем фоновую музыку
 #шрифты 
 font.init()
-'''
 font1 = font.Font('minecraft.ttf',36)
 font2 = font.Font('minecraft.ttf',64)
-'''
-font1 = font.SysFont('Arial',36)
-font2 = font.SysFont('Arial',64)
 win_text = font2.render('winer',1,(255,0,0))
 lose_text = font2.render('loser',1,(255,0,0))
 '''
@@ -170,7 +175,7 @@ monster = Enemy('nps',10,hight_enemy,w_enemy,100,20,'ufo.png')
 bullets_boss = sprite.Group(  )
 bullets = sprite.Group()
 monsters = sprite.Group()
-
+bulet_killl = sprite.Group()
 
 restart = GameSprite('рестарт',0,70,70,50,w_win-120,img_res)
 
@@ -219,7 +224,7 @@ while game:
         monsters.update()
         bullets.update()
         bosss.update()
-
+        bulet_killl.update()
         list_collides = sprite.groupcollide(monsters,bullets,True,True)
         for colide in list_collides:
             deadpool += 1
@@ -297,16 +302,27 @@ while game:
             bullets_boss.update()
             bullets_boss.draw(window)
             nope = 0    
+            list_collides_3 = sprite.spritecollide(player,bullets_boss,True)
             list_collides_1 = sprite.spritecollide(bosss,bullets,True)
+            list_collides_2 = sprite.groupcollide(bulet_killl,bullets,True,True)
             for colibe in list_collides_1:
                 hp_boos -= 1
                 if hp_boos == 0:
                     finish = True
                     text_boss =  font2.render('вы выйграли ',1,(255,255,255))
                     window.blit(text_boss,(100,200))
-            text_boss =  font2.render('хп боссв: '+str(hp_boos),1,(255,255,255))
-            window.blit(text_boss,(10,300))
-            
+            for colibe in list_collides_3:
+                hp_player -= 1
+                if hp_player == 0:
+                    finish = True
+                    text_boss =  font2.render('вы проиграли ',1,(255,255,255))
+                    window.blit(text_boss,(100,200))
+            for colibe in list_collides_2:
+                bullets_boss.firrrre()
+            text_boss =  font1.render('Хп босса: '+str(hp_boos),1,(255,255,255))
+            window.blit(text_boss,(10,125))
+            text_boss =  font1.render('Хп: '+str(hp_player),1,(255,255,255))
+            window.blit(text_boss,(10,330))
         player.reset()
         monsters.draw(window)
         bullets.draw(window)
